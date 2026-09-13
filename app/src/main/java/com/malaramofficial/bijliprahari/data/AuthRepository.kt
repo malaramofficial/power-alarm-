@@ -15,6 +15,14 @@ class AuthRepository(context: Context) {
     }.getOrNull()
 
     fun currentUid(): String? = auth?.currentUser?.uid
+    fun isSignedIn(): Boolean = auth?.currentUser != null
+    fun signOut() { auth?.signOut() }
+
+    suspend fun signIn(email: String, password: String): Result<String> = runCatching {
+        val firebaseAuth = auth ?: error("Firebase Auth उपलब्ध नहीं है")
+        firebaseAuth.signInWithEmailAndPassword(email.trim(), password).await()
+        firebaseAuth.currentUser?.uid ?: error("लॉगिन UID नहीं मिला")
+    }
 
     suspend fun getCurrentRole(): UserRole {
         val uid = currentUid() ?: return UserRole.UNKNOWN
@@ -25,5 +33,11 @@ class AuthRepository(context: Context) {
             "FARMER" -> UserRole.FARMER
             else -> UserRole.UNKNOWN
         }
+    }
+
+    suspend fun getAssignedFeederIds(): List<String> {
+        val uid = currentUid() ?: return emptyList()
+        val data = db?.collection("users")?.document(uid)?.get()?.await()?.data ?: return emptyList()
+        return (data["feederIds"] as? List<*>)?.filterIsInstance<String>().orEmpty()
     }
 }
