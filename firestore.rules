@@ -29,19 +29,27 @@ service cloud.firestore {
 
     match /devices/{deviceId} {
       allow read: if signedIn();
-      allow write: if isAdmin() || (request.resource.data.feederId is string && isGssForFeeder(request.resource.data.feederId));
+      allow write: if isAdmin()
+        || (request.resource.data.feederId is string && isGssForFeeder(request.resource.data.feederId));
     }
 
     match /power_events/{eventId} {
       allow read: if signedIn();
-      allow create: if signedIn();
-      allow update: if isAdmin() || (resource.data.feederId is string && isGssForFeeder(resource.data.feederId));
+      // Direct client writes are limited to Admin/GSS. Production IoT events
+      // must enter through an authenticated server/device ingestion path.
+      allow create: if isAdmin()
+        || (request.resource.data.feederId is string && isGssForFeeder(request.resource.data.feederId));
+      allow update: if isAdmin()
+        || (resource.data.feederId is string && isGssForFeeder(resource.data.feederId));
       allow delete: if isAdmin();
     }
 
     match /subscriptions/{subscriptionId} {
       allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
-      allow create, update: if isAdmin() || (signedIn() && request.resource.data.userId == request.auth.uid);
+      allow create, update: if isAdmin()
+        || (signedIn()
+          && request.resource.data.userId == request.auth.uid
+          && request.resource.data.feederId is string);
       allow delete: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
     }
 
