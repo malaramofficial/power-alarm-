@@ -2,10 +2,16 @@ name: Bijli Prahari Android
 
 on:
   push:
-    branches: ["main", "feature/bijli-prahari-v1"]
+    branches: ["main"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GRADLE_VERSION: '8.10'
 
 jobs:
   build:
@@ -25,7 +31,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.10'
+          gradle-version: ${{ env.GRADLE_VERSION }}
       - name: Build release APK
         run: gradle assembleRelease --no-daemon
       - name: Upload release APK
