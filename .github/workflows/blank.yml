@@ -32,11 +32,11 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: ${{ env.GRADLE_VERSION }}
-      - name: Build release APK
-        run: gradle assembleRelease --no-daemon
-      - name: Upload release APK
+      - name: Build installable debug APK
+        run: gradle assembleDebug --no-daemon
+      - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: Bijli-Prahari-release
-          path: app/build/outputs/apk/release/*.apk
+          name: Bijli-Prahari-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
