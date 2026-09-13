@@ -2,6 +2,12 @@
   "name": "bijli-prahari-functions",
   "private": true,
   "engines": { "node": "20" },
-  "scripts": { "start": "firebase emulators:start --only functions", "lint": "eslint ." },
-  "dependencies": { "firebase-admin": "^13.0.1", "firebase-functions": "^6.1.1" }
+  "scripts": {
+    "start": "firebase emulators:start --only functions",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.1",
+    "firebase-functions": "^6.1.1"
+  }
 }
