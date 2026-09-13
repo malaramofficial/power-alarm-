@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "615941030248",
+    "project_id": "bijli-mitra-e7b4c",
+    "storage_bucket": "bijli-mitra-e7b4c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:615941030248:android:89c0636ce538a2b0bb16dd",
+        "android_client_info": {
+          "package_name": "com.malaramofficial.bijliprahari"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "615941030248-fth4hee26ohaej2f27t6a9dqidpf9u9q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDkA4yxMcOzk-0d9dtl68MIkLDAcvGYSt4k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "615941030248-fth4hee26ohaej2f27t6a9dqidpf9u9q.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
