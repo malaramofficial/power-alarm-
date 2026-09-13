@@ -5,6 +5,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Source
 import kotlinx.coroutines.tasks.await
 
 class AuthRepository(context: Context) {
@@ -26,9 +27,17 @@ class AuthRepository(context: Context) {
         firebaseAuth.currentUser?.uid ?: error("लॉगिन UID नहीं मिला")
     }
 
+    private suspend fun firestoreForServerRead(): FirebaseFirestore {
+        val firestore = db ?: error("Firebase Firestore उपलब्ध नहीं है")
+        // Recover from a stale/offline Firestore client state before admin/GSS reads.
+        firestore.enableNetwork().await()
+        return firestore
+    }
+
     suspend fun getCurrentRole(): UserRole {
         val uid = currentUid() ?: return UserRole.UNKNOWN
-        val data = db?.collection("users")?.document(uid)?.get()?.await()?.data ?: return UserRole.UNKNOWN
+        val firestore = firestoreForServerRead()
+        val data = firestore.collection("users").document(uid).get(Source.SERVER).await().data ?: return UserRole.UNKNOWN
         return when ((data["role"] as? String)?.uppercase()) {
             "ADMIN" -> UserRole.ADMIN
             "GSS" -> UserRole.GSS
@@ -39,7 +48,8 @@ class AuthRepository(context: Context) {
 
     suspend fun getAssignedFeederIds(): List<String> {
         val uid = currentUid() ?: return emptyList()
-        val data = db?.collection("users")?.document(uid)?.get()?.await()?.data ?: return emptyList()
+        val firestore = firestoreForServerRead()
+        val data = firestore.collection("users").document(uid).get(Source.SERVER).await().data ?: return emptyList()
         return (data["feederIds"] as? List<*>)?.filterIsInstance<String>().orEmpty()
     }
 }
