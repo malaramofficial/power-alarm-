@@ -2,18 +2,18 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
-    function isAdmin() {
-      return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
-    }
+    function userDoc() { return get(/databases/$(database)/documents/users/$(request.auth.uid)); }
+    function isAdmin() { return signedIn() && userDoc().data.role == 'ADMIN'; }
     function isGssForFeeder(feederId) {
-      return signedIn()
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'GSS'
-        && feederId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.feederIds;
+      return signedIn() && userDoc().data.role == 'GSS' && feederId in userDoc().data.feederIds;
     }
 
     match /users/{userId} {
       allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
-      allow create, update: if request.auth.uid == userId || isAdmin();
+      allow create: if isAdmin() || (request.auth.uid == userId && request.resource.data.role == 'FARMER');
+      allow update: if isAdmin() || (request.auth.uid == userId
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.feederIds == resource.data.feederIds);
       allow delete: if isAdmin();
     }
 
@@ -40,7 +40,9 @@ service cloud.firestore {
     }
 
     match /subscriptions/{subscriptionId} {
-      allow read, create, update, delete: if signedIn() && (request.auth.uid == request.resource.data.userId || isAdmin());
+      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+      allow create, update: if isAdmin() || (signedIn() && request.resource.data.userId == request.auth.uid);
+      allow delete: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
     }
 
     match /notification_logs/{logId} {
