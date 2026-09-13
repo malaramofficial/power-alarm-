@@ -3,6 +3,7 @@ package com.malaramofficial.bijliprahari.data
 import android.content.Context
 import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Source
 import kotlinx.coroutines.tasks.await
 
 class FeederRepository(context: Context) {
@@ -13,8 +14,13 @@ class FeederRepository(context: Context) {
     suspend fun getAssignedFeeders(feederIds: List<String>): List<Feeder> {
         val firestore = db ?: return emptyList()
         if (feederIds.isEmpty()) return emptyList()
+
+        // Make sure the client is not stuck in an offline state before loading GSS data.
+        firestore.enableNetwork().await()
+
         return feederIds.mapNotNull { id ->
-            firestore.collection("feeders").document(id).get().await().toObject(Feeder::class.java)?.copy(id = id)
+            firestore.collection("feeders").document(id).get(Source.SERVER).await()
+                .toObject(Feeder::class.java)?.copy(id = id)
         }
     }
 }
