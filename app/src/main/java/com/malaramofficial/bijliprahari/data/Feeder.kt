@@ -5,5 +5,8 @@ data class Feeder(
     val name: String,
     val gssName: String,
     val villageCount: Int = 0,
-    val active: Boolean = true
+    val farmerCount: Int = 0,
+    val active: Boolean = true,
+    val currentState: String = "UNKNOWN",
+    val lastEventAt: Long? = null
 )
