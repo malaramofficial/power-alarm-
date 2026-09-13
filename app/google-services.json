@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "615941030248-uod4l4b88mbi63gucapatlcge9llaaev.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.malaramofficial.bijliprahari",
+            "certificate_hash": "93f8dabc10a1f5313f16b2c3597740a35aa97abd"
+          }
+        },
+        {
           "client_id": "615941030248-fth4hee26ohaej2f27t6a9dqidpf9u9q.apps.googleusercontent.com",
           "client_type": 3
         }
