@@ -6,7 +6,12 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Source
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.InetAddress
+import java.net.URL
 
 class AuthRepository(context: Context) {
     private val app: FirebaseApp? = runCatching {
@@ -36,7 +41,7 @@ class AuthRepository(context: Context) {
             firestore.enableNetwork().await()
             return firestore
         } catch (e: Exception) {
-            throw IllegalStateException(firebaseDiagnostic("Firestore network enable विफल"), e)
+            throw IllegalStateException(firebaseDiagnostic("Firestore network enable विफल | ${describe(e)} | ${networkDiagnostic()}"), e)
         }
     }
 
@@ -59,6 +64,23 @@ class AuthRepository(context: Context) {
         return parts.joinToString(" <- ")
     }
 
+    private suspend fun networkDiagnostic(): String = withContext(Dispatchers.IO) {
+        val host = "firestore.googleapis.com"
+        try {
+            val ip = InetAddress.getByName(host).hostAddress ?: "unknown"
+            val connection = (URL("https://$host/").openConnection() as HttpURLConnection).apply {
+                connectTimeout = 8000
+                readTimeout = 8000
+                requestMethod = "GET"
+                instanceFollowRedirects = false
+            }
+            val code = try { connection.responseCode } finally { connection.disconnect() }
+            "DNS=OK($ip), HTTPS=$code"
+        } catch (e: Exception) {
+            "FAILED ${e::class.java.simpleName}: ${e.message ?: "no-message"}"
+        }
+    }
+
     suspend fun getCurrentRole(): UserRole {
         val uid = currentUid() ?: return UserRole.UNKNOWN
         val firestore = firestoreForServerRead()
@@ -72,7 +94,7 @@ class AuthRepository(context: Context) {
             }
         } catch (e: Exception) {
             throw IllegalStateException(
-                firebaseDiagnostic("users/$uid read विफल | ${describe(e)}"),
+                firebaseDiagnostic("users/$uid read विफल | ${describe(e)} | network=${networkDiagnostic()}"),
                 e
             )
         }
@@ -86,7 +108,7 @@ class AuthRepository(context: Context) {
             (data["feederIds"] as? List<*>)?.filterIsInstance<String>().orEmpty()
         } catch (e: Exception) {
             throw IllegalStateException(
-                firebaseDiagnostic("users/$uid feederIds read विफल | ${describe(e)}"),
+                firebaseDiagnostic("users/$uid feederIds read विफल | ${describe(e)} | network=${networkDiagnostic()}"),
                 e
             )
         }
