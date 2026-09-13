@@ -9,11 +9,14 @@ import com.google.firebase.firestore.Source
 import kotlinx.coroutines.tasks.await
 
 class AuthRepository(context: Context) {
+    private val app: FirebaseApp? = runCatching {
+        FirebaseApp.getApps(context).firstOrNull()
+    }.getOrNull()
     private val auth: FirebaseAuth? = runCatching {
-        if (FirebaseApp.getApps(context).isEmpty()) null else FirebaseAuth.getInstance()
+        app?.let { FirebaseAuth.getInstance(it) }
     }.getOrNull()
     private val db: FirebaseFirestore? = runCatching {
-        if (FirebaseApp.getApps(context).isEmpty()) null else FirebaseFirestore.getInstance()
+        app?.let { FirebaseFirestore.getInstance(it) }
     }.getOrNull()
 
     fun currentUid(): String? = auth?.currentUser?.uid
@@ -28,28 +31,64 @@ class AuthRepository(context: Context) {
     }
 
     private suspend fun firestoreForServerRead(): FirebaseFirestore {
-        val firestore = db ?: error("Firebase Firestore उपलब्ध नहीं है")
-        // Recover from a stale/offline Firestore client state before admin/GSS reads.
-        firestore.enableNetwork().await()
-        return firestore
+        val firestore = db ?: error(firebaseDiagnostic("Firebase Firestore instance नहीं बना"))
+        try {
+            firestore.enableNetwork().await()
+            return firestore
+        } catch (e: Exception) {
+            throw IllegalStateException(firebaseDiagnostic("Firestore network enable विफल"), e)
+        }
+    }
+
+    private fun firebaseDiagnostic(prefix: String): String {
+        val appInfo = app?.options?.let {
+            "project=${it.projectId ?: "null"}, appId=${it.applicationId}"
+        } ?: "FirebaseApp=null"
+        return "$prefix | $appInfo"
+    }
+
+    private fun describe(error: Throwable): String {
+        val parts = mutableListOf<String>()
+        var current: Throwable? = error
+        var depth = 0
+        while (current != null && depth < 4) {
+            parts += "${current::class.java.simpleName}: ${current.message ?: "no-message"}"
+            current = current.cause
+            depth++
+        }
+        return parts.joinToString(" <- ")
     }
 
     suspend fun getCurrentRole(): UserRole {
         val uid = currentUid() ?: return UserRole.UNKNOWN
         val firestore = firestoreForServerRead()
-        val data = firestore.collection("users").document(uid).get(Source.SERVER).await().data ?: return UserRole.UNKNOWN
-        return when ((data["role"] as? String)?.uppercase()) {
-            "ADMIN" -> UserRole.ADMIN
-            "GSS" -> UserRole.GSS
-            "FARMER" -> UserRole.FARMER
-            else -> UserRole.UNKNOWN
+        return try {
+            val data = firestore.collection("users").document(uid).get(Source.SERVER).await().data ?: return UserRole.UNKNOWN
+            when ((data["role"] as? String)?.uppercase()) {
+                "ADMIN" -> UserRole.ADMIN
+                "GSS" -> UserRole.GSS
+                "FARMER" -> UserRole.FARMER
+                else -> UserRole.UNKNOWN
+            }
+        } catch (e: Exception) {
+            throw IllegalStateException(
+                firebaseDiagnostic("users/$uid read विफल | ${describe(e)}"),
+                e
+            )
         }
     }
 
     suspend fun getAssignedFeederIds(): List<String> {
         val uid = currentUid() ?: return emptyList()
         val firestore = firestoreForServerRead()
-        val data = firestore.collection("users").document(uid).get(Source.SERVER).await().data ?: return emptyList()
-        return (data["feederIds"] as? List<*>)?.filterIsInstance<String>().orEmpty()
+        return try {
+            val data = firestore.collection("users").document(uid).get(Source.SERVER).await().data ?: return emptyList()
+            (data["feederIds"] as? List<*>)?.filterIsInstance<String>().orEmpty()
+        } catch (e: Exception) {
+            throw IllegalStateException(
+                firebaseDiagnostic("users/$uid feederIds read विफल | ${describe(e)}"),
+                e
+            )
+        }
     }
 }
