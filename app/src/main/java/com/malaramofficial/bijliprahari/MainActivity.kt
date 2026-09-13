@@ -1,6 +1,5 @@
 package com.malaramofficial.bijliprahari
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -87,7 +86,7 @@ private fun GoogleLogin(auth: AuthRepository, done: () -> Unit) {
                         if (busy) return@Button
                         busy = true; error = null
                         val options = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                            .requestIdToken(context.getString(com.google.android.gms.common.R.string.common_google_play_services_unknown_issue))
+                            .requestIdToken("615941030248-fth4hee26ohaej2f27t6a9dqidpf9u9q.apps.googleusercontent.com")
                             .requestEmail().build()
                         val client = GoogleSignIn.getClient(context, options)
                         launcher.launch(client.signInIntent)
