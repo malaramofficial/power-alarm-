@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "615941030248-uod4l4b88mbi63gucapatlcge9llaaev.apps.googleusercontent.com",
+          "client_id": "615941030248-j3b8uc6aeoqfumgfvun9fpireqs1uirp.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.malaramofficial.bijliprahari",
-            "certificate_hash": "93f8dabc10a1f5313f16b2c3597740a35aa97abd"
+            "certificate_hash": "796f2c90dac9cad92f257768903945dc03e2b08b"
           }
         },
         {
@@ -28,7 +28,7 @@
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDkA4yxMcOzk-0-9dtl68MIkLDAcvGYSt4k"
+          "current_key": "AIzaSyDkA4yxMcOzk0-9dtl68MIkLDAcvGYSt4k"
         }
       ],
       "services": {
