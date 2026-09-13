@@ -6,7 +6,10 @@ data class GssDashboardState(
     val outageStartedAt: Long? = null,
     val todayOnMinutes: Int = 0,
     val todayOffMinutes: Int = 0,
+    val outageCountToday: Int = 0,
+    val affectedVillageCount: Int = 0,
     val deviceOnline: Boolean = false,
     val batteryPercent: Int = 0,
-    val signalLabel: String = "अज्ञात"
+    val signalLabel: String = "अज्ञात",
+    val lastUpdatedAt: Long? = null
 )
