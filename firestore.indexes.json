@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "power_events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "feederId", "order": "ASCENDING" },
+        { "fieldPath": "atMillis", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
