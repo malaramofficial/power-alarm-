@@ -3,6 +3,7 @@ package com.malaramofficial.bijliprahari.data
 import android.content.Context
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
@@ -18,9 +19,10 @@ class AuthRepository(context: Context) {
     fun isSignedIn(): Boolean = auth?.currentUser != null
     fun signOut() { auth?.signOut() }
 
-    suspend fun signIn(email: String, password: String): Result<String> = runCatching {
+    suspend fun signInWithGoogleIdToken(idToken: String): Result<String> = runCatching {
         val firebaseAuth = auth ?: error("Firebase Auth उपलब्ध नहीं है")
-        firebaseAuth.signInWithEmailAndPassword(email.trim(), password).await()
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        firebaseAuth.signInWithCredential(credential).await()
         firebaseAuth.currentUser?.uid ?: error("लॉगिन UID नहीं मिला")
     }
 
