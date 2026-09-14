@@ -81,6 +81,28 @@ class AuthRepository(context: Context) {
         }
     }
 
+    private suspend fun firestoreRestProbe(uid: String): String = withContext(Dispatchers.IO) {
+        try {
+            val firebaseUser = auth?.currentUser ?: return@withContext "NO_AUTH_USER"
+            val token = firebaseUser.getIdToken(false).await().token
+                ?: return@withContext "NO_ID_TOKEN"
+            val projectId = app?.options?.projectId ?: return@withContext "NO_PROJECT_ID"
+            val url = URL(
+                "https://firestore.googleapis.com/v1/projects/$projectId/databases/(default)/documents/users/$uid"
+            )
+            val connection = (url.openConnection() as HttpURLConnection).apply {
+                connectTimeout = 8000
+                readTimeout = 8000
+                requestMethod = "GET"
+                setRequestProperty("Authorization", "Bearer $token")
+            }
+            val code = try { connection.responseCode } finally { connection.disconnect() }
+            "REST=$code"
+        } catch (e: Exception) {
+            "REST_FAILED ${e::class.java.simpleName}: ${e.message ?: "no-message"}"
+        }
+    }
+
     suspend fun getCurrentRole(): UserRole {
         val uid = currentUid() ?: return UserRole.UNKNOWN
         val firestore = firestoreForServerRead()
@@ -94,7 +116,7 @@ class AuthRepository(context: Context) {
             }
         } catch (e: Exception) {
             throw IllegalStateException(
-                firebaseDiagnostic("users/$uid read विफल | ${describe(e)} | network=${networkDiagnostic()}"),
+                firebaseDiagnostic("users/$uid read विफल | ${describe(e)} | network=${networkDiagnostic()} | ${firestoreRestProbe(uid)}"),
                 e
             )
         }
@@ -108,7 +130,7 @@ class AuthRepository(context: Context) {
             (data["feederIds"] as? List<*>)?.filterIsInstance<String>().orEmpty()
         } catch (e: Exception) {
             throw IllegalStateException(
-                firebaseDiagnostic("users/$uid feederIds read विफल | ${describe(e)} | network=${networkDiagnostic()}"),
+                firebaseDiagnostic("users/$uid feederIds read विफल | ${describe(e)} | network=${networkDiagnostic()} | ${firestoreRestProbe(uid)}"),
                 e
             )
         }
